@@ -1,0 +1,32 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  OPENAI_API_KEY: $(OPENAI_API_KEY)
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.8'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r ci/requirements_ci.txt
+  displayName: 'Install dependencies'
+
+- script: python ci/create_workspace.py
+  displayName: 'Create Azure ML Workspace'
+
+- script: python ci/prepare_data.py
+  displayName: 'Prepare fine-tuning data'
+
+- script: python ci/upload_data.py
+  displayName: 'Upload data to Azure ML'
+
+- script: python ci/fine_tune_openai.py
+  env:
+    OPENAI_API_KEY: $(OPENAI_API_KEY)
+  displayName: 'Fine-tune OpenAI model'
